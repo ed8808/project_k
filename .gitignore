@@ -1,0 +1,42 @@
+# Ignore virtual environment
+venv/
+
+# Ignore compiled Python files
+*.pyc
+
+# Ignore logs
+*.log
+
+# Ignore database files
+*.db
+
+# Ignore cache files
+__pycache__/
+
+# Ignore environment variables file
+.env
+
+# Ignore local development settings
+settings_local.py
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore package dependencies
+venv/
+
+*.pkl
+ffmpeg*
+
+**/weights/
+
+build/
+dependency_links.txt
+PKG-INFO
+requires.txt
+SOURCES.txt
+top_level.txt
+
+output/
+temp/

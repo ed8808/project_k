@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h3><center>{% block title %} Input YouTube link {% endblock %}</h3>
+    <div class="form-container">
+    <form method="post">
+        <table class="center">
+        <tr>
+        <td><input type="text" name="content" size="50" value="{{ request.form['content'] }}"></td>
+        <td><input type="submit" name="convert" value="convert" class="button"></td>
+        </tr>
+        </table>
+
+        <table class="center">
+        <tr>
+        <td><input type="submit" name="vocal" value="vocal" class="button"></td>
+        <td><input type="submit" name="repeat" value="repeat" class="button"></td>
+        <td><input type="submit" name="stop" value="stop" class="button"></td>
+        </tr>
+        </table>
+
+        <table class="center">
+        <tr>
+        <td><input type="submit" name="delete" value="delete" class="button"></td>
+        <td><input type="submit" name="jump" value="jump" class="button"></td>
+        </tr>
+        </table>
+
+    </form>
+    </div>
+
+    {{ tStrToLoad | safe }}
+
+{% endblock %}

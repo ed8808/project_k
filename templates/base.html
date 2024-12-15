@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" http-equiv="refresh" content="10">
+    <title></title>
+    <style>
+        .message {
+            padding: 10px;
+            margin: 5px;
+            background-color: #FFFFFF
+        }
+
+        table, th, td {
+            border: none;
+            margin: 5px;
+            padding: 5px;
+            text-align: center;
+        }
+
+	.form-container {
+  	    display: flex;
+  	    justify-content: center;
+  	    align-items: center;
+  	    min-height: 10vh;
+	}
+
+	input.button {
+    	    width: 10em;  height: 2em;
+	}
+
+    </style>
+</head>
+<body style="background-color:powderblue;">
+    <div class="content">
+        {% block content %} {% endblock %}
+    </div>
+</body>
+</html>
