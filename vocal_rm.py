@@ -19,7 +19,7 @@ output_filename=''
 format=''
 QUEUED_QUEUE = "SELECT name,id,state,date FROM queue WHERE state IS 'QUEUED' ORDER BY date ASC LIMIT 1"
 UPDATE_QUEUE = "UPDATE queue SET name = ?, state = ? WHERE id = ? AND date = ?" 
-EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'DOWNLOADED' OR state IS 'PLAYED') AND id = ? ORDER BY date DESC LIMIT 1"
+EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state is 'DOWNLOADED' OR state IS 'PLAYED') AND id = ? ORDER BY date DESC LIMIT 1"
 
 def get_uid(url):
   return url

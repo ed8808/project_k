@@ -2,10 +2,11 @@ import database
 import mpv
 from pygame import mixer
 import os
+import subprocess
 import time
 
 OUTPUT = 'output/'
-PLAY_QUEUE = "SELECT name,id,state,date FROM queue WHERE state IS 'DOWNLOADED' ORDER BY date ASC LIMIT 1"
+PLAY_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY date ASC LIMIT 1"
 UPDATE_QUEUE = "UPDATE queue SET state = ? WHERE id = ? AND date = ?" 
 DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ?) AND id = ?" 
 
@@ -49,6 +50,11 @@ def stop_video():
   if player:
     player.stop()
 
+def HDMI_disconnect():
+  return subprocess.call(['xrandr'],
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.STDOUT)
+
 def main():
   global repeat, stop
 
@@ -56,22 +62,24 @@ def main():
     time.sleep(1)
     repeat=0
     stop=0
-    play_list = database.db_show(PLAY_QUEUE)
-    if play_list:
-      id = play_list[0][1]
-      date = play_list[0][3]
-      output_filename = OUTPUT + play_list[0][0]
-      if os.path.exists(output_filename+'.mp4') == False:
-        database.db_update(UPDATE_QUEUE, ('ERROR', id, date))
-        print(f"Error: {output_filename+'.mp4'} file doesn't exist!")
-      else:
-        play_media(output_filename)
-        if repeat:
-          pass
-        elif stop:
-          database.db_update(UPDATE_QUEUE, ('PLAYED', id, date))
+    if HDMI_disconnect() != 1:
+      play_list = database.db_show(PLAY_QUEUE)
+      if play_list:
+        id = play_list[0][1]
+        date = play_list[0][3]
+        output_filename = OUTPUT + play_list[0][0]
+        if os.path.exists(output_filename+'.mp4') == False:
+          database.db_update(UPDATE_QUEUE, ('ERROR', id, date))
+          print(f"Error: {output_filename+'.mp4'} file doesn't exist!")
         else:
-          database.db_update(UPDATE_QUEUE, ('PLAYED', id, date))
+          database.db_update(UPDATE_QUEUE, ('PLAYING', id, date))
+          play_media(output_filename)
+          if repeat:
+            pass
+          elif stop:
+            database.db_update(UPDATE_QUEUE, ('PLAYED', id, date))
+          else:
+            database.db_update(UPDATE_QUEUE, ('PLAYED', id, date))
 
 if __name__ == '__main__':
   main()

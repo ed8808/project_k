@@ -19,14 +19,12 @@ app = Flask(__name__)
 class ItemTable(Table):
   idx = Col('Index')
   name = Col('Song')
-  id = Col('URL')
   state = Col('State')
 
 class Item(object):
-  def __init__(self, idx, name, id, state):
+  def __init__(self, idx, name, state):
     self.idx = idx
     self.name = name
-    self.id = id
     self.state = state
 
 def show_queue():
@@ -36,11 +34,12 @@ def show_queue():
   db_list = database.db_show(SHOW_QUEUE)
   for i in range(len(db_list)):
     if "[" in db_list[i][0]:
-      name,_ = db_list[i][0].split("[")
+      idx = db_list[i][0].rfind('[')
+      name= db_list[i][0][:idx]
     else:
       name = db_list[i][0]
     records += [db_list[i][1]]
-    items += [Item(i+1,name,db_list[i][1],db_list[i][2])]
+    items += [Item(i+1,name,db_list[i][2])]
   table = ItemTable(items)
 
 def init_queue():
