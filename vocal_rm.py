@@ -34,6 +34,10 @@ def get_filename(url):
     id = get_uid(url)
     return id, output_filename, format
 
+def get_titlename(filename):
+  idx = filename.rfind('[')
+  return filename[:idx]
+
 def extract_audio(url,format='wav'):
   ydl_opts = {
     'format': format+'/bestaudio/best',
@@ -71,7 +75,8 @@ def replace_audio(video_src, video_target, audio_src=TEMP+'mixed.wav'):
   if os.path.exists(audio_src) == False:
     print(f"Error: {audio_src} file doesn't exist!")
     return
-  param = f'-y -i \'{video_src}\' -i {audio_src} -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 temp.mp4'
+  subprocess.call(['ln','-sf',video_src,'_temp'])
+  param = f'-y -i _temp -i {audio_src} -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 temp.mp4'
   os.system(f'ffmpeg {param}')
   subprocess.call(['mv','temp.mp4',video_target])
 
@@ -110,8 +115,8 @@ def vocal_remove(url):
   replace_audio(TEMP+output_filename+'.'+format, OUTPUT+output_filename+'.mp4')
   copy_vocal(OUTPUT+output_filename+'.mp3')
 
-  output_filename_ , _ = output_filename.split("[")
-  dumps = glob.glob(TEMP+output_filename_[:-1]+'*', recursive=True)
+  e = glob.escape(TEMP+output_filename)
+  dumps = glob.glob(e+'*', recursive=True)
   for dump in dumps:
     os.remove(dump)
 

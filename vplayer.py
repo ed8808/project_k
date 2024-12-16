@@ -62,6 +62,7 @@ def main():
       date = play_list[0][3]
       output_filename = OUTPUT + play_list[0][0]
       if os.path.exists(output_filename+'.mp4') == False:
+        database.db_update(UPDATE_QUEUE, ('ERROR', id, date))
         print(f"Error: {output_filename+'.mp4'} file doesn't exist!")
       else:
         play_media(output_filename)

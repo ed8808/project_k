@@ -49,7 +49,7 @@ def init_queue():
 
 def add_queue(data):
   t = int(time.time())
-  database.db_update(ADD_QUEUE, ('',data,'QUEUED',t))
+  database.db_update(ADD_QUEUE, (*data,'QUEUED',t))
 
 def delete_queue(data):
   global records
@@ -68,8 +68,8 @@ def index():
   if request.method == 'POST':
     if request.form.get('convert') == 'convert':
       content = request.form['content']
-      id = vocal_rm.get_uid(content)
-      add_queue(id)
+      id,name,_ = vocal_rm.get_filename(content)
+      add_queue((name,id))
     elif request.form.get('vocal') == 'vocal':
       vplayer.vocal_toggle()
     elif request.form.get('repeat') == 'repeat':
