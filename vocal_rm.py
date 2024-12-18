@@ -95,7 +95,7 @@ def vocal_remove(url):
 
   start_time = time.time()
   id, output_filename,format = get_filename(url)
-  extract_audio(url,'mp3')
+  extract_audio(url)
   extract_video(url)
 
   if torch.cuda.is_available(): device = "cuda"
@@ -104,7 +104,7 @@ def vocal_remove(url):
   print(f'device = {device}: vocal removal in progress ... ')
   demucs = models.Demucs(name="hdemucs_mmi", other_metadata={"segment":2, "split":True},
                         device=device, logger=None)
-  res = demucs(TEMP+output_filename+'.mp3')
+  res = demucs(TEMP+output_filename+'.wav')
   seperted_audio = res
   vocals = seperted_audio["vocals"]
   base = seperted_audio["bass"]
@@ -118,8 +118,7 @@ def vocal_remove(url):
 
   mix_audio([base_path, drums_path, other_path])
   replace_audio(TEMP+output_filename+'.'+format, OUTPUT+output_filename+'.mp4')
-  #copy_vocal(OUTPUT+output_filename+'.mp3')
-  copy_old(OUTPUT+output_filename+'.mp3',TEMP+output_filename+'.mp3')
+  copy_old(OUTPUT+output_filename+'.wav',TEMP+output_filename+'.wav')
 
   e = glob.escape(TEMP+output_filename)
   dumps = glob.glob(e+'*', recursive=True)

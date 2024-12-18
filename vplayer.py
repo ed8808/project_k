@@ -21,10 +21,10 @@ def play_media(file):
   global player,mixer,mixer_vol
   player = mpv.MPV(fullscreen=True)
   player.play(file+'.mp4')
-  vocal_exist = os.path.exists(file+'.mp3')
+  vocal_exist = os.path.exists(file+'.wav')
   if vocal_exist:
     time.sleep(0.5)
-    mixer.music.load(file+'.mp3')
+    mixer.music.load(file+'.wav')
     mixer.music.set_volume(mixer_vol)
     mixer.music.play()
   player.wait_for_playback()
