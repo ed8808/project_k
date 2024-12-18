@@ -5,6 +5,7 @@ import os
 import subprocess
 import time
 
+BT_ADDR = '48:BF:72:EC:27:63'
 OUTPUT = 'output/'
 PLAY_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY date ASC LIMIT 1"
 UPDATE_QUEUE = "UPDATE queue SET state = ? WHERE id = ? AND date = ?" 
@@ -22,6 +23,7 @@ def play_media(file):
   player.play(file+'.mp4')
   vocal_exist = os.path.exists(file+'.mp3')
   if vocal_exist:
+    time.sleep(0.5)
     mixer.music.load(file+'.mp3')
     mixer.music.set_volume(mixer_vol)
     mixer.music.play()
@@ -31,15 +33,19 @@ def play_media(file):
     mixer.music.stop()
 
 def vocal_toggle():
-  global mixer,mixer_vol
+  global player,mixer,mixer_vol
   if mixer_vol:
     mixer_vol=0
+    mixer.music.set_volume(0)
+    player.volume = 100
+
   else:
     mixer_vol=1
-  mixer.music.set_volume(mixer_vol)
+    mixer.music.set_volume(1)
+    player.volume = 0
 
 def repeat_video():
-  global player,repeat
+  global player, repeat
   repeat = True
   if player:
     player.stop()
@@ -50,10 +56,12 @@ def stop_video():
   if player:
     player.stop()
 
-def HDMI_disconnect():
-  return subprocess.call(['xrandr'],
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.STDOUT)
+def mic_connect(bt_addr):
+  mic = subprocess.check_output(['hcitool','con'])
+  mic = mic.decode("utf-8")
+  if bt_addr in mic:
+    return True
+  return False
 
 def main():
   global repeat, stop
@@ -62,7 +70,7 @@ def main():
     time.sleep(1)
     repeat=0
     stop=0
-    if HDMI_disconnect() != 1:
+    if mic_connect(BT_ADDR):
       play_list = database.db_show(PLAY_QUEUE)
       if play_list:
         id = play_list[0][1]

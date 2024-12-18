@@ -4,18 +4,32 @@
     <h3><center>{% block title %} Input YouTube link {% endblock %}</h3>
     <div class="form-container">
     <form method="post">
-        <table class="center">
-        <tr><td><input type="text" name="content" style="font-size:12pt; width:700px; height:100px" value="{{ request.form['content'] }}"></td></tr>
-        <tr><td><input type="submit" name="convert" value="convert" class="button"></td></tr></table>
-        <table class="center">
-        <tr><td><input type="submit" name="vocal" value="vocal" class="button"></td>
-        <td><input type="submit" name="repeat" value="repeat" class="button"></td>
-        <td><input type="submit" name="stop" value="stop" class="button"></td>
-        <td><input type="submit" name="delete" value="delete" class="button"></td>
-        <td><input type="submit" name="jump" value="jump" class="button"></td></tr>
+        <table>
+           <tr>
+		<td><input type="text" name="content" style="font-size:12pt; width:700px; height:50px" value="{{ request.form['content'] }}"></td>
+	    </tr>
         </table>
 
-        {{ tStrToLoad | safe }}
+        <table>
+       	    <tr>
+		<td></td>
+		<td></td>		
+		<td><input type="submit" name="add" value="add" class="button"></td>
+		<td></td>
+		<td></td>
+ 	    </tr>
+            <tr>
+              	<td><input type="submit" name="vocal" value="vocal" class="button"></td>
+        	<td><input type="submit" name="repeat" value="repeat" class="button"></td>
+        	<td><input type="submit" name="stop" value="stop" class="button"></td>
+        	<td><input type="submit" name="delete" value="delete" class="button"></td>
+        	<td><input type="submit" name="jump" value="jump" class="button"></td>
+	    </tr>
+        </table>
+
+        {{ tStrToLoad1 | safe }}
+        <br><br><br>
+        {{ tStrToLoad2 | safe }}
 
     </form>
     </div>
