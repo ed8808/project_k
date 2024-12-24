@@ -120,9 +120,6 @@ def index():
   table2 = ItemTable(items2)
   return render_template('index.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
 
-def main():
+if __name__ == '__main__':
   init_queue()
   app.run(host='0.0.0.0', port=3000)
-
-if __name__ == '__main__':
-  main()
