@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 User=ubuntu
-Group=www-data
+Group=ubuntu
 Environment="PATH=/home/ubuntu/.local/bin"
 WorkingDirectory=/var/www/project_k/
 ExecStart=/home/ubuntu/.local/bin/gunicorn --workers 3 \
---bind unix:/var/www/project_k/project_k.sock app:app
+--bind unix:/var/www/project_k/project_k.sock ktv:main
 
 [Install]
 WantedBy=multi-user.target

@@ -23,7 +23,7 @@ def play_media(file):
   player.play(file+'.mp4')
   vocal_exist = os.path.exists(file+'.wav')
   if vocal_exist:
-    time.sleep(0.5)
+    #time.sleep(0.5)
     mixer.music.load(file+'.wav')
     mixer.music.set_volume(mixer_vol)
     mixer.music.play()
