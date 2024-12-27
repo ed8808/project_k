@@ -1,6 +1,13 @@
 import sqlite3
+import os
+import subprocess
 
-DB_QUEUE = 'queue.db'
+FOLDER = 'data/'
+DB_QUEUE = FOLDER+'queue.db'
+
+if os.path.exists(FOLDER) == False:
+  subprocess.call(['mkdir',FOLDER])
+
 connection = sqlite3.connect(DB_QUEUE, check_same_thread=False)
 
 def db_create(cmd):

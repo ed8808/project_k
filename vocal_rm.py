@@ -65,7 +65,8 @@ def mix_audio(infiles, outfile=TEMP+'mixed.wav'):
       print(f"Error: {infile} file doesn't exist!")
       return
     param += ' -i '+infile
-  param += f' -y -filter_complex amix=inputs={len(infiles)}:duration=longest:dropout_transition=0:normalize=0 -aq 0 {outfile}'
+  #param += f' -y -filter_complex amix=inputs={len(infiles)}:duration=longest:dropout_transition=0:normalize=0 -aq 0 {outfile}'
+  param += f' -y -filter_complex amix=inputs={len(infiles)}:duration=longest:dropout_transition=0 -aq 0 {outfile}'
   return os.system(f'ffmpeg {param}')
 
 def replace_audio(video_src, video_target, audio_src=TEMP+'mixed.wav'):
@@ -137,8 +138,15 @@ def check_exist(url):
     return os.path.exists(OUTPUT+output_filename+'.mp4')
   return False
 
+def setup_folder(folder):
+  if os.path.exists(folder) == False:
+    subprocess.call(['mkdir', folder])
+
 def main():
   global output_filename
+
+  setup_folder(TEMP)
+  setup_folder(OUTPUT)
 
   while True:
     time.sleep(1)

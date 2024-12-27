@@ -39,7 +39,8 @@ SOURCES.txt
 top_level.txt
 
 output/
+data/
 temp/
 _temp
-
+tests
 *.sock

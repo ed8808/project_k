@@ -5,7 +5,6 @@ import os
 import subprocess
 import time
 
-BT_ADDR = '48:BF:72:EC:27:63'
 OUTPUT = 'output/'
 PLAY_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY date ASC LIMIT 1"
 UPDATE_QUEUE = "UPDATE queue SET state = ? WHERE id = ? AND date = ?" 
@@ -56,13 +55,6 @@ def stop_video():
   if player:
     player.stop()
 
-def mic_connect(bt_addr):
-  mic = subprocess.check_output(['hcitool','con'])
-  mic = mic.decode("utf-8")
-  if bt_addr in mic:
-    return True
-  return False
-
 def main():
   global repeat, stop
 
@@ -70,7 +62,7 @@ def main():
     time.sleep(1)
     repeat=0
     stop=0
-    if mic_connect(BT_ADDR):
+    if True:
       play_list = database.db_show(PLAY_QUEUE)
       if play_list:
         id = play_list[0][1]
