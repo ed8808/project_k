@@ -6,6 +6,7 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 #    install_requires=required,
 
+'''
 setup(
    name='uvr',
    version='0.1',
@@ -21,3 +22,4 @@ setup(
         'uvr': ['**/*.txt', '**/*.t7', '**/*.pth', '**/*.json', '**/*.yaml', '**/*.yml']
     }
 )
+'''
