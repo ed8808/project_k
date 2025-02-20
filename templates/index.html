@@ -2,36 +2,46 @@
 
 {% block content %}
     <h3><center>{% block title %} Input YouTube link {% endblock %}</h3>
-    <div class="form-container">
-    <form method="post">
-        <table>
-           <tr>
-		<td><input type="text" name="content" style="font-size:12pt; width:700px; height:50px" value="{{ request.form['content'] }}"></td>
+    <div>
+
+        <table class="center">
+        <tr>
+		<td><input type="text" name="content" style="font-size:12pt; width:700px; height:50px" id="textbox"></td>
 	    </tr>
-        </table>
+ 
+		<table class="center">
+		<tr>
+			<td></td>
+			<td></td>		
+			<td><input type="button" name="add" value="add" class="button" onclick="buttonEvent({'cmd':'add','param': getInput()})"></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td><input type="button" name="vocal" value="vocal" class="button" onclick="buttonEvent({'cmd':'vocal','param':''})"></td>
+			<td><input type="button" name="repeat" value="repeat" class="button" onclick="buttonEvent({'cmd':'repeat','param':''})"></td>
+			<td><input type="button" name="stop" value="stop" class="button" onclick="buttonEvent({'cmd':'stop','param':''})"></td>
+			<td><input type="button" name="delete" value="delete" class="button" onclick="buttonEvent({'cmd':'delete','param': getInput()})"></td>
+			<td><input type="button" name="jump" value="jump" class="button" onclick="buttonEvent({'cmd':'jump','param': getInput()})"></td>
+		</tr>
+		</table>
+		<tr>
+			{{ tStrToLoad1 | safe }}
+			<br><br><br>
+			{{ tStrToLoad2 | safe }}
+		</tr>
+		
 
-        <table>
-       	    <tr>
-		<td></td>
-		<td></td>		
-		<td><input type="submit" name="add" value="add" class="button"></td>
-		<td></td>
-		<td></td>
- 	    </tr>
-            <tr>
-              	<td><input type="submit" name="vocal" value="vocal" class="button"></td>
-        	<td><input type="submit" name="repeat" value="repeat" class="button"></td>
-        	<td><input type="submit" name="stop" value="stop" class="button"></td>
-        	<td><input type="submit" name="delete" value="delete" class="button"></td>
-        	<td><input type="submit" name="jump" value="jump" class="button"></td>
-	    </tr>
-        </table>
-
-        {{ tStrToLoad1 | safe }}
-        <br><br><br>
-        {{ tStrToLoad2 | safe }}
-
-    </form>
     </div>
+
+	<script>
+		function getInput()
+		{
+			var data = document.getElementById('textbox').value;
+			document.getElementById('textbox').value = '';
+			return data;
+		}
+	</script>
+
 
 {% endblock %}

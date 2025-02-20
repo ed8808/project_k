@@ -1,4 +1,4 @@
-from flask import Flask,render_template,request,url_for,redirect
+from flask import Flask,render_template,request,url_for,redirect, jsonify, Response
 from flask_table import Table,Col
 import vocal_rm
 import database
@@ -27,6 +27,7 @@ class Item(object):
     self.name = name
     self.state = state
 
+
 def show_queue(query):
   items=[]
   records=[]
@@ -47,7 +48,7 @@ def show_queue_old(query):
   records=[]
   name=[]
   db_list = database.db_show(query)
-
+  
   for i in range(len(db_list)):
     name += [ db_list[i][0] ]
 
@@ -85,40 +86,50 @@ def check_readd_queue(data):
       data = database.db_find(EXIST_QUEUE, (name,))[0][1]
   return data
 
-@app.route("/", methods=('GET','POST'))
+@app.route("/")
 def index():
+  items1,_ = show_queue(SHOW_QUEUE)
+  items2,_ = show_queue_old(PLAYED_QUEUE)
+  table1 = ItemTable(items1,classes=['center'])
+  table2 = ItemTable(items2,classes=['center'])
+  return render_template('index.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
+
+
+@app.route("/process", methods=['POST', 'GET'])
+def process_parser():
   if request.method == 'POST':
     try:
-      if request.form.get('add') == 'add':
-        content = request.form['content']
+      command = ''
+      param = ''
+      server_data = request.get_json()
+      if 'cmd' in server_data:
+        command = server_data['cmd']
+      if 'param' in server_data:
+        content = server_data['param']
+
+      if command == 'add':
         content = check_readd_queue(content)
         id,name,_ = vocal_rm.get_filename(content)
         add_queue((name,id))
-      elif request.form.get('vocal') == 'vocal':
+      elif command == 'vocal':
         vplayer.vocal_toggle()
-      elif request.form.get('repeat') == 'repeat':
+      elif command == 'repeat':
         vplayer.repeat_video()
-      elif request.form.get('stop') == 'stop':
+      elif command == 'stop':
         vplayer.stop_video()
-      elif request.form.get('delete') == 'delete':
-        content = request.form['content']
+      elif command == 'delete':
         if content.isdigit():
           delete_queue(int(content))
-      elif request.form.get('jump') == 'jump':
-        content = request.form['content']
+      elif command == 'jump':
         if content.isdigit():
           jump_queue(int(content))
+      
+      return jsonify({'processed':'true'})
+
     except Exception as e:
       print(f'Error: {e}')
       pass
 
-  items1,_ = show_queue(SHOW_QUEUE)
-  items2,_ = show_queue_old(PLAYED_QUEUE)
-  #items = items1+items2
-  #table = ItemTable(items)
-  table1 = ItemTable(items1)
-  table2 = ItemTable(items2)
-  return render_template('index.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
 
 def main():
   init_queue()

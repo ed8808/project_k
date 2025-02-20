@@ -14,10 +14,12 @@ player = 0
 repeat = 0
 stop = 0
 mixer_vol = 0
+vocal_exist = 0
 mixer.init()
 
 def play_media(file):
-  global player,mixer,mixer_vol
+  global player,mixer,mixer_vol,vocal_exist
+  mixer_vol = 0
   player = mpv.MPV(fullscreen=True)
   player.play(file+'.mp4')
   vocal_exist = os.path.exists(file+'.wav')
@@ -32,16 +34,17 @@ def play_media(file):
     mixer.music.stop()
 
 def vocal_toggle():
-  global player,mixer,mixer_vol
-  if mixer_vol:
-    mixer_vol=0
-    mixer.music.set_volume(0)
-    player.volume = 100
+  global player,mixer,mixer_vol,vocal_exist
+  if vocal_exist:
+    if mixer_vol:
+      mixer_vol=0
+      mixer.music.set_volume(0)
+      player.volume = 100
 
-  else:
-    mixer_vol=1
-    mixer.music.set_volume(1)
-    player.volume = 0
+    else:
+      mixer_vol=1
+      mixer.music.set_volume(0.2)
+      player.volume = 0
 
 def repeat_video():
   global player, repeat
