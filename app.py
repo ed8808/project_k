@@ -5,6 +5,8 @@ import database
 import vplayer
 import os
 import time
+import queue
+import threading
 
 SHOW_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'QUEUED' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
 PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date DESC"
@@ -15,6 +17,9 @@ SKIP_QUEUE = "UPDATE queue SET date = ? WHERE (state = ? OR state = ?) AND id = 
 EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE name = ? ORDER BY date DESC LIMIT 1"
 
 app = Flask(__name__)
+# List to hold all connected clients (EventSource connections)
+clients = []
+_queue = 0
 
 class ItemTable(Table):
   idx = Col('Index')
@@ -86,14 +91,45 @@ def check_readd_queue(data):
       data = database.db_find(EXIST_QUEUE, (name,))[0][1]
   return data
 
+# Background function to send a forced refresh signal to all clients
+def send_refresh_to_all():
+  global clients
+  while True:
+    time.sleep(3)  # Wait for 10 seconds (or any interval you want)
+
+    # Send refresh signal to all connected clients
+    for client in clients:
+      client.put("data: refresh\n\n")
+
 @app.route("/")
 def index():
+  return render_template('index.html')
+
+@app.route("/stream")
+def stream():
+  def generate():
+    global _queue, clients
+    _queue = queue.Queue()
+    clients.append(_queue)  # Add the client to the list of connected clients
+
+    try:
+        while True:
+            message = _queue.get()  # Wait for a message from the server
+            yield message  # Send the message to the client (via SSE)
+
+    finally:
+        clients.remove(_queue)  # Remove the client when they disconnect
+
+  return Response(generate(), content_type='text/event-stream')
+
+@app.route("/get_table")
+def get_table():
   items1,_ = show_queue(SHOW_QUEUE)
   items2,_ = show_queue_old(PLAYED_QUEUE)
-  table1 = ItemTable(items1,classes=['center'])
-  table2 = ItemTable(items2,classes=['center'])
-  return render_template('index.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
-
+  #table1 = ItemTable(items1,classes=['center'])
+  #table2 = ItemTable(items2,classes=['center'])
+  #return render_template('table.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
+  return render_template('table.html', songs=items1+items2)
 
 @app.route("/process", methods=['POST', 'GET'])
 def process_parser():
@@ -133,6 +169,10 @@ def process_parser():
 
 def main():
   init_queue()
+  # Start the background thread to periodically send refresh signal to clients
+  thread = threading.Thread(target=send_refresh_to_all)
+  thread.daemon = True  # Ensure the thread will stop when the server stops
+  thread.start()
   app.run(host='0.0.0.0', port=3000)
 
 if __name__ == '__main__':

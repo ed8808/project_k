@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div>
+    <br><br><br>
+<table class="center">
+    <thead>
+        <tr>
+            <th>Index</th>
+            <th>Song</th>
+            <th>State</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for song in songs %}
+        <tr>
+            <td>{{ song.idx }}</td>
+            <td>{{ song.name }}</td>
+            <td>{{ song.state }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

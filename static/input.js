@@ -4,10 +4,7 @@ function Requests(server_data){
         url: "/process",
         data: JSON.stringify(server_data),
         contentType: "application/json",
-        dataType: 'json',
-        success: function(data) {
-            window.location.reload();
-         },
+        dataType: 'json'
       });
 }
 
