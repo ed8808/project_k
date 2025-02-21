@@ -43,7 +43,7 @@ def vocal_toggle():
 
     else:
       mixer_vol=1
-      mixer.music.set_volume(0.2)
+      mixer.music.set_volume(0.3)
       player.volume = 0
 
 def repeat_video():

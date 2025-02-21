@@ -9,7 +9,7 @@ import queue
 import threading
 
 SHOW_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'QUEUED' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
-PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date DESC"
+PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
 INIT_QUEUE = "CREATE TABLE IF NOT EXISTS queue (name TEXT, id TEXT, state TEXT, date INTEGER)"
 ADD_QUEUE = "INSERT INTO queue (name, id, state, date) VALUES(?,?,?,?)"
 DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ?) AND id = ?" 
@@ -57,10 +57,14 @@ def show_queue_old(query):
   for i in range(len(db_list)):
     name += [ db_list[i][0] ]
 
-  names = list(set(name))
+  #names = list(set(name))
+  names = list(dict.fromkeys(name))
   for i in range(len(names)):
     records += [names[i]]
-    items += [Item(-(i+1),names[i],'PLAYED')]
+    if "[" in names[i]:
+      idx = names[i].rfind("[")
+      names[i] = names[i][:idx]
+    items = [Item(-(i+1),names[i],'PLAYED')] + items
   return items, records
 
 def init_queue():
@@ -126,10 +130,7 @@ def stream():
 def get_table():
   items1,_ = show_queue(SHOW_QUEUE)
   items2,_ = show_queue_old(PLAYED_QUEUE)
-  #table1 = ItemTable(items1,classes=['center'])
-  #table2 = ItemTable(items2,classes=['center'])
-  #return render_template('table.html', tStrToLoad1=table1.__html__(), tStrToLoad2=table2.__html__())
-  return render_template('table.html', songs=items1+items2)
+  return render_template('table.html', songs=items1+[Item('','','') for i in range(1)]+items2)
 
 @app.route("/process", methods=['POST', 'GET'])
 def process_parser():
