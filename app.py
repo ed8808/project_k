@@ -8,11 +8,12 @@ import time
 import queue
 import threading
 
-SHOW_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'QUEUED' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
+SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
 PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
+CONVERT_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'CONVERTING')  ORDER BY date DESC"
 INIT_QUEUE = "CREATE TABLE IF NOT EXISTS queue (name TEXT, id TEXT, state TEXT, date INTEGER)"
 ADD_QUEUE = "INSERT INTO queue (name, id, state, date) VALUES(?,?,?,?)"
-DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ?) AND id = ?" 
+DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ? OR state = ?) AND id = ? AND date = ?" 
 SKIP_QUEUE = "UPDATE queue SET date = ? WHERE (state = ? OR state = ?) AND id = ?"
 EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE name = ? ORDER BY date DESC LIMIT 1"
 
@@ -36,6 +37,8 @@ class Item(object):
 def show_queue(query):
   items=[]
   records=[]
+  states=[]
+  ts=[]
   db_list = database.db_show(query)
 
   for i in range(len(db_list)):
@@ -45,8 +48,10 @@ def show_queue(query):
     else:
       name = db_list[i][0]
     records += [db_list[i][1]]
+    states += [db_list[i][2]]
+    ts += [db_list[i][3]]
     items += [Item(i+1,name,db_list[i][2])]
-  return items, records
+  return items, records, states, ts
 
 def show_queue_old(query):
   items=[]
@@ -71,19 +76,31 @@ def init_queue():
   global cursor
   database.db_create(INIT_QUEUE)
 
+def tidy_queue():
+  db_list = database.db_show(CONVERT_QUEUE)
+  for i in range(len(db_list)):
+    if i == 0:
+      database.db_update(DELETE_QUEUE, ('QUEUED', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
+    else:
+      database.db_update(DELETE_QUEUE, ('PLAYED', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
+
 def add_queue(data):
   t = int(time.time())
   database.db_update(ADD_QUEUE, (*data,'QUEUED',t))
 
 def delete_queue(data):
-  _, records = show_queue(SHOW_QUEUE)
+  _, records, _, ts = show_queue(SHOW_QUEUE)
   if data <= len(records):
-    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'DOWNLOADED', records[data-1]))
+    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'CONVERTING', 'DOWNLOADED', records[data-1], ts[data-1]))
 
 def jump_queue(data):
-  _, records = show_queue(SHOW_QUEUE)
+  _, records, states, ts = show_queue(SHOW_QUEUE)
   if data <= len(records):
-    database.db_update(SKIP_QUEUE, (0, 'QUEUED', 'DOWNLOADED', records[data-1]))
+    for i in range(len(records)): #find first queued records and skip to its front
+      if states[i] == 'QUEUED' or states[i] == 'DOWNLOADED':
+        new_ts = ts[i]-1
+        database.db_update(SKIP_QUEUE, (new_ts, 'QUEUED', 'DOWNLOADED', records[data-1]))
+        break
 
 def check_readd_queue(data):
   table = []
@@ -128,7 +145,7 @@ def stream():
 
 @app.route("/get_table")
 def get_table():
-  items1,_ = show_queue(SHOW_QUEUE)
+  items1,_,_,_ = show_queue(SHOW_QUEUE)
   items2,_ = show_queue_old(PLAYED_QUEUE)
   return render_template('table.html', songs=items1+[Item('','','') for i in range(1)]+items2)
 
@@ -154,6 +171,8 @@ def process_parser():
         vplayer.repeat_video()
       elif command == 'stop':
         vplayer.stop_video()
+      elif command == 'pause':
+        vplayer.pause_video()
       elif command == 'delete':
         if content.isdigit():
           delete_queue(int(content))
@@ -170,6 +189,7 @@ def process_parser():
 
 def main():
   init_queue()
+  tidy_queue()
   # Start the background thread to periodically send refresh signal to clients
   thread = threading.Thread(target=send_refresh_to_all)
   thread.daemon = True  # Ensure the thread will stop when the server stops

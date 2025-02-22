@@ -13,6 +13,7 @@ DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ?) AND id
 player = 0
 repeat = 0
 stop = 0
+pause = False
 mixer_vol = 0
 vocal_exist = 0
 mixer.init()
@@ -58,8 +59,12 @@ def stop_video():
   if player:
     player.stop()
 
+def pause_video():
+  global pause
+  pause = not pause
+
 def main():
-  global repeat, stop
+  global repeat, stop, pause
 
   while True:
     time.sleep(1)
@@ -67,7 +72,7 @@ def main():
     stop=0
     if True:
       play_list = database.db_show(PLAY_QUEUE)
-      if play_list:
+      if play_list and not pause:
         id = play_list[0][1]
         date = play_list[0][3]
         output_filename = OUTPUT + play_list[0][0]

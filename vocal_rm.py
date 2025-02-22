@@ -95,7 +95,7 @@ def vocal_remove(url):
   global id,output_filename,format
 
   start_time = time.time()
-  id, output_filename,format = get_filename(url)
+  
   extract_audio(url)
   extract_video(url)
 
@@ -143,7 +143,7 @@ def setup_folder(folder):
     subprocess.call(['mkdir', folder])
 
 def main():
-  global output_filename
+  global output_filename, id, format
 
   setup_folder(TEMP)
   setup_folder(OUTPUT)
@@ -156,6 +156,8 @@ def main():
       date = download_list[0][3]
       try:
         if not check_exist(id):
+          id, output_filename,format = get_filename(id)
+          database.db_update(UPDATE_QUEUE, (output_filename, 'CONVERTING', id, date))
           output_filename = vocal_remove(id)
         database.db_update(UPDATE_QUEUE, (output_filename, 'DOWNLOADED', id, date))
       except Exception as e:
