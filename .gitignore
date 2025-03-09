@@ -42,5 +42,5 @@ output/
 data/
 temp/
 _temp
-tests
+tests/
 *.sock
