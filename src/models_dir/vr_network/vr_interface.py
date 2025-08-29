@@ -160,7 +160,7 @@ def _load_model_with_hprams(model_path:str, mp:ModelParameters,
     else:
         model_run = nets.determine_model_capacity(mp.param['bins'] * 2, nn_arch_size)
                     
-    model_run.load_state_dict(torch.load(model_path, map_location='cpu')) 
+    model_run.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=False)) 
     model_run.to(device) 
 
     return model_run

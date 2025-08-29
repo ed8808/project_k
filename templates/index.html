@@ -39,6 +39,10 @@
             padding: 10px;
         }
 
+        .tabl tr:hover {
+            background-color: lightgreen;
+        }
+
         input.button {
             width: 100%;  
             height: 2em;
@@ -56,7 +60,7 @@
         .container {
             display: flex;
             flex-direction: column;
-            height: 10vh;  /* Full viewport height */
+            height: 100vh;  /* Full viewport height */
         }
 
         /* Fixed header */
@@ -64,14 +68,23 @@
             padding: 10px;
             text-align: center;
             font-size: 24px;
-            position: sticky;
-            top: 10px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: powderblue;
             z-index: 10; /* Ensure it's above the table */
+        }
+
+        #table-container {
+            margin-top: 400px;
+            overflow-y: auto;
+            flex: 1;
         }
 
     </style>
 
-	<body style="background-color:powderblue;">
+	<body style="background-color:powderblue; overflow: hidden;">
 
 		<div class="container">
 			<div class="header">
@@ -90,9 +103,9 @@
 				</table>
 				<table class="center">
 					<tr>
-						<td><input type="button" name="add" value="add" class="button" onclick="buttonEvent({'cmd':'add','param': getInput()})"></td>
-						<td><input type="button" name="delete" value="delete" class="button" onclick="buttonEvent({'cmd':'delete','param': getInput()})"></td>
-						<td><input type="button" name="jump" value="jump" class="button" onclick="buttonEvent({'cmd':'jump','param': getInput()})"></td>
+						<td><input type="button" name="add" value="add" class="button" onclick="handleAddButton()"></td>
+						<td><input type="button" name="delete" value="delete" class="button" onclick="handleDeleteButton()"></td>
+						<td><input type="button" name="jump" value="jump" class="button" onclick="handleJumpButton()"></td>
 					</tr>
 				</table>		
     		</div>
@@ -112,6 +125,24 @@
 				return data;
 			}
 
+			let currentHoveredRow = null;
+
+			async function handleAddButton() {
+				var textbox = document.getElementById('textbox');
+				
+				// Check if a row is being hovered and copy its index
+				if (currentHoveredRow && currentHoveredRow.cells[0]) {
+					textbox.value = currentHoveredRow.cells[0].textContent;
+					buttonEvent({'cmd':'add','param': getInput()});
+				}
+				
+				if(textbox.value.startsWith('http://') || textbox.value.startsWith('https://') || textbox.value.trim() !== '')
+				{
+					buttonEvent({'cmd':'add','param': getInput()});
+				}
+				
+			}
+
 			function enablePaste() {
 				var inputField = document.getElementById('textbox');
 				inputField.setSelectionRange(inputField.value.length, inputField.value.length); // Focus the input
@@ -120,17 +151,73 @@
 			// Establish an SSE connection to the Flask server
 			const eventSource = new EventSource('/stream');
 
+			function refreshTable() {
+				const container = document.getElementById('table-container');
+				const scrollTop = container.scrollTop;
+				
+				fetch('/get_table')
+					.then(response => response.text())
+					.then(html => {
+						container.innerHTML = html;
+						container.scrollTop = scrollTop;
+						addRowHoverListeners();
+					});
+			}
+
 			// Event handler for when new data is received from the server
 			eventSource.onmessage = function(event) {
 				if (event.data === 'refresh') {
-					// When the server sends a "refresh" message, update the table
-					fetch('/get_table')
-						.then(response => response.text())
-						.then(html => {
-							document.getElementById('table-container').innerHTML = html;
-						});
+					refreshTable();
 				}
 			};
+
+			function handleDeleteButton() {
+				var textbox = document.getElementById('textbox');
+				if (currentHoveredRow && currentHoveredRow.cells[0]) {
+					textbox.value = currentHoveredRow.cells[0].textContent;
+				}
+				buttonEvent({'cmd':'delete','param': getInput()});
+			}
+
+			function handleJumpButton() {
+				var textbox = document.getElementById('textbox');
+				if (currentHoveredRow && currentHoveredRow.cells[0]) {
+					textbox.value = currentHoveredRow.cells[0].textContent;
+				}
+				buttonEvent({'cmd':'jump','param': getInput()});
+			}
+
+			function addRowHoverListeners() {
+				const rows = document.querySelectorAll('.tabl tr');
+				const deleteBtn = document.querySelector('input[name="delete"]');
+				const jumpBtn = document.querySelector('input[name="jump"]');
+				const addBtn = document.querySelector('input[name="add"]');
+				
+				rows.forEach(row => {
+					row.addEventListener('mouseenter', function() {
+						currentHoveredRow = this;
+						const indexCell = this.cells[0];
+						const index = parseInt(indexCell.textContent);
+						if (indexCell && index < 0) {
+							deleteBtn.disabled = true;
+							jumpBtn.disabled = true;
+						} else if (indexCell && index > 0) {
+							addBtn.disabled = true;
+						}
+					});
+					row.addEventListener('mouseleave', function() {
+						deleteBtn.disabled = false;
+						jumpBtn.disabled = false;
+						addBtn.disabled = false;
+					});
+				});
+			}
+
+			// Initialize on page load
+			addRowHoverListeners();
+
+			// Automatic refresh every 3 seconds
+			setInterval(refreshTable, 3000);
 		</script>
 
 </body>

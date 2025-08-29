@@ -6,7 +6,7 @@ After=network.target
 Type=oneshot
 RemainAfterExit=yes
 User=ubuntu
-ExecStart=/home/ubuntu/code/project_k/start.sh
+ExecStart=/home/ubuntu/project_k/start.sh
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
 
 [Install]

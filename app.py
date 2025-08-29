@@ -1,3 +1,6 @@
+from gevent import monkey
+#monkey.patch_all()
+
 from flask import Flask,render_template,request,url_for,redirect, jsonify, Response
 from flask_table import Table,Col
 import vocal_rm
@@ -7,6 +10,7 @@ import os
 import time
 import queue
 import threading
+
 
 SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
 PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
@@ -104,7 +108,7 @@ def jump_queue(data):
 
 def check_readd_queue(data):
   table = []
-  if data[0] == '-':
+  if data and data[0] == '-':
     data = data[1:]
     if data.isdigit():
       _, records = show_queue_old(PLAYED_QUEUE)
@@ -135,13 +139,19 @@ def stream():
 
     try:
         while True:
-            message = _queue.get()  # Wait for a message from the server
-            yield message  # Send the message to the client (via SSE)
+            try:
+                message = _queue.get(timeout=10)  # Wait for a message from the server
+                yield message  # Send the message to the client (via SSE)
+                time.sleep(1)
 
+            except queue.Empty:
+                #send a heartbeat to keep connection alive
+                yield "data: ping\n\n"
+            yield "" #sys.stdout.flush() # flush after each yield 
     finally:
         clients.remove(_queue)  # Remove the client when they disconnect
 
-  return Response(generate(), content_type='text/event-stream')
+  return Response(generate(), mimetype='text/event-stream')
 
 @app.route("/get_table")
 def get_table():
@@ -184,7 +194,9 @@ def process_parser():
 
     except Exception as e:
       print(f'Error: {e}')
-      pass
+      return jsonify({'error': str(e)})
+  
+  return jsonify({'error': 'Invalid request method'})
 
 
 def main():

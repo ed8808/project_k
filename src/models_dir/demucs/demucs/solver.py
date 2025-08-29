@@ -104,7 +104,7 @@ class Solver(object):
         """Reset state of the solver, potentially using checkpoint."""
         if self.checkpoint_file.exists():
             logger.info(f'Loading checkpoint model: {self.checkpoint_file}')
-            package = torch.load(self.checkpoint_file, 'cpu')
+            package = torch.load(self.checkpoint_file, 'cpu', weights_only=False)
             self.model.load_state_dict(package['state'])
             self.optimizer.load_state_dict(package['optimizer'])
             self.history[:] = package['history']
@@ -122,7 +122,7 @@ class Solver(object):
             root = self.folder.parent
             cf = root / str(self.args.continue_from) / name
             logger.info("Loading from %s", cf)
-            package = torch.load(cf, 'cpu')
+            package = torch.load(cf, 'cpu', weights_only=False)
             self.best_state = package['best_state']
             if self.args.continue_best:
                 self.model.load_state_dict(package['best_state'], strict=False)

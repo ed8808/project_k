@@ -97,7 +97,7 @@ def load_modle(model_path:str, model_data:ConfigDict, device:str='cuda')->torch.
 
     """
     model = TFC_TDF_net(model_data, device=device)
-    model.load_state_dict(torch.load(model_path, map_location='cpu'))
+    model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=False))
     model.to(device).eval()
     return model
 

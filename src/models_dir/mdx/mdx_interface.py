@@ -74,7 +74,7 @@ def load_from_ckpt(model_path:str, device:str):
         model_run (torch.nn.Module): The loaded model.
         (dim_c, hop) (tuple): The parameters of the model. (dim_c: int, hop: int)
     """
-    model_params = torch.load(model_path, map_location=lambda storage, loc: storage)['hyper_parameters']
+    model_params = torch.load(model_path, map_location=lambda storage, loc: storage, weights_only=False)['hyper_parameters']
     dim_c, hop = model_params['dim_c'], model_params['hop_length']
     separator = MdxnetSet.ConvTDFNet(**model_params)
     model_run = separator.load_from_checkpoint(model_path).to(device).eval()

@@ -104,7 +104,7 @@ def _eval_old(old_sig, x):
         assert False
 
     buf = io.BytesIO(proc.stdout)
-    return torch.load(buf)
+    return torch.load(buf, weights_only=False)
 
 
 def compare(old_sig, model):
