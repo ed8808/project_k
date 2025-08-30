@@ -140,6 +140,8 @@
 					textbox.value = currentHoveredRow.cells[0].textContent;
 					buttonEvent({'cmd':'add','param': getInput()});
 				}
+
+				refreshTable();
 				
 			}
 
@@ -175,16 +177,22 @@
 				var textbox = document.getElementById('textbox');
 				if (currentHoveredRow && currentHoveredRow.cells[0]) {
 					textbox.value = currentHoveredRow.cells[0].textContent;
+					
+					buttonEvent({'cmd':'delete','param': getInput()});
+					refreshTable();
 				}
-				buttonEvent({'cmd':'delete','param': getInput()});
+				
 			}
 
 			function handleJumpButton() {
 				var textbox = document.getElementById('textbox');
 				if (currentHoveredRow && currentHoveredRow.cells[0]) {
 					textbox.value = currentHoveredRow.cells[0].textContent;
+
+					buttonEvent({'cmd':'jump','param': getInput()});
+					refreshTable();
 				}
-				buttonEvent({'cmd':'jump','param': getInput()});
+				
 			}
 
 			function addRowHoverListeners() {
@@ -199,10 +207,8 @@
 						const indexCell = this.cells[0];
 						const index = parseInt(indexCell.textContent);
 						if (indexCell && index < 0) {
-							deleteBtn.disabled = true;
+							//deleteBtn.disabled = true;
 							jumpBtn.disabled = true;
-						} else if (indexCell && index > 0) {
-							addBtn.disabled = true;
 						}
 					});
 					row.addEventListener('mouseleave', function() {
@@ -216,8 +222,8 @@
 			// Initialize on page load
 			addRowHoverListeners();
 
-			// Automatic refresh every 3 seconds
-			setInterval(refreshTable, 3000);
+			// Automatic refresh every 10 seconds
+			setInterval(refreshTable, 10000);
 		</script>
 
 </body>

@@ -12,12 +12,13 @@ import queue
 import threading
 
 
-SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING')  ORDER BY date ASC"
+SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
+SHOW_ALL_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING' OR state IS 'PLAYED') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
 PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
 CONVERT_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'CONVERTING')  ORDER BY date DESC"
 INIT_QUEUE = "CREATE TABLE IF NOT EXISTS queue (name TEXT, id TEXT, state TEXT, date INTEGER)"
 ADD_QUEUE = "INSERT INTO queue (name, id, state, date) VALUES(?,?,?,?)"
-DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ? OR state = ?) AND id = ? AND date = ?" 
+DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ? OR state = ? OR state = ?) AND id = ? AND date = ?" 
 SKIP_QUEUE = "UPDATE queue SET date = ? WHERE (state = ? OR state = ?) AND id = ?"
 EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE name = ? ORDER BY date DESC LIMIT 1"
 
@@ -84,37 +85,45 @@ def tidy_queue():
   db_list = database.db_show(CONVERT_QUEUE)
   for i in range(len(db_list)):
     if i == 0:
-      database.db_update(DELETE_QUEUE, ('QUEUED', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
+      database.db_update(DELETE_QUEUE, ('QUEUED', 'CONVERTING', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
     else:
-      database.db_update(DELETE_QUEUE, ('PLAYED', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
+      database.db_update(DELETE_QUEUE, ('PLAYED', 'CONVERTING', 'CONVERTING', 'CONVERTING', 'CONVERTING', db_list[i][1], db_list[i][3]))
 
-def add_queue(data):
+def add_queue(data, is_readd=False):
   t = int(time.time())
-  database.db_update(ADD_QUEUE, (*data,'QUEUED',t))
+  if is_readd:
+    database.db_update(ADD_QUEUE, (*data, 'DOWNLOADED', t)) #add readded song to queue
+  else:
+    database.db_update(ADD_QUEUE, (*data,'QUEUED',t))
 
 def delete_queue(data):
-  _, records, _, ts = show_queue(SHOW_QUEUE)
+  _, records, _, ts = show_queue(SHOW_ALL_QUEUE)
   if data <= len(records):
-    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'CONVERTING', 'DOWNLOADED', records[data-1], ts[data-1]))
+    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'CONVERTING', 'DOWNLOADED', 'PLAYED', records[data-1], ts[data-1]))
 
 def jump_queue(data):
   _, records, states, ts = show_queue(SHOW_QUEUE)
   if data <= len(records):
     for i in range(len(records)): #find first queued records and skip to its front
+      if states[i] == 'CONVERTING' and states[data-1] == 'DOWNLOADED':
+        database.db_update(SKIP_QUEUE, (ts[i]-1, 'DOWNLOADED', 'DOWNLOADED', records[data-1]))  #ts[i]-1 is timestamp just before the first converting record
+        break
       if states[i] == 'QUEUED' or states[i] == 'DOWNLOADED':
-        new_ts = ts[i]-1
-        database.db_update(SKIP_QUEUE, (new_ts, 'QUEUED', 'DOWNLOADED', records[data-1]))
+        database.db_update(SKIP_QUEUE, (ts[i]-1, 'QUEUED', 'DOWNLOADED', records[data-1]))  #ts[i]-1 is timestamp just before the first queued/downloaded record
         break
 
 def check_readd_queue(data):
   table = []
+  is_readd = False
   if data and data[0] == '-':
     data = data[1:]
     if data.isdigit():
       _, records = show_queue_old(PLAYED_QUEUE)
       name = records[int(data)-1]
       data = database.db_find(EXIST_QUEUE, (name,))[0][1]
-  return data
+      if data:
+        is_readd = True
+  return data, is_readd
 
 # Background function to send a forced refresh signal to all clients
 def send_refresh_to_all():
@@ -172,9 +181,9 @@ def process_parser():
         content = server_data['param']
 
       if command == 'add':
-        content = check_readd_queue(content)
+        content,is_readd = check_readd_queue(content)
         id,name,_ = vocal_rm.get_filename(content)
-        add_queue((name,id))
+        add_queue((name,id),is_readd)
       elif command == 'vocal':
         vplayer.vocal_toggle()
       elif command == 'repeat':

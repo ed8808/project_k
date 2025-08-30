@@ -11,9 +11,9 @@ def exit_handler(signal_received, frame):
 
 def main():
   signal(SIGINT, exit_handler)
-  t1 = threading.Thread(target=vocal_rm.main)
+  t3 = threading.Thread(target=vocal_rm.main)
   t2 = threading.Thread(target=vplayer.main)
-  t3 = threading.Thread(target=app.main)
+  t1 = threading.Thread(target=app.main)
   t1.start()
   t2.start()
   t3.start()
