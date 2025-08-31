@@ -14,7 +14,8 @@ import threading
 
 SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
 SHOW_ALL_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING' OR state IS 'PLAYED') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
-PLAYED_QUEUE = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
+PLAYED_QUEUE1 = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
+PLAYED_QUEUE2 = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date DESC"
 CONVERT_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'CONVERTING')  ORDER BY date DESC"
 INIT_QUEUE = "CREATE TABLE IF NOT EXISTS queue (name TEXT, id TEXT, state TEXT, date INTEGER)"
 ADD_QUEUE = "INSERT INTO queue (name, id, state, date) VALUES(?,?,?,?)"
@@ -47,18 +48,18 @@ def show_queue(query):
   db_list = database.db_show(query)
 
   for i in range(len(db_list)):
-    if "[" in db_list[i][0]:
-      idx = db_list[i][0].rfind('[')
-      name= db_list[i][0][:idx]
-    else:
-      name = db_list[i][0]
+    #if "[" in db_list[i][0]:
+    #  idx = db_list[i][0].rfind('[')
+    #  name= db_list[i][0][:idx]
+    #else:
+    name = db_list[i][0]
     records += [db_list[i][1]]
     states += [db_list[i][2]]
     ts += [db_list[i][3]]
-    items += [Item(i+1,name,db_list[i][2])]
+    items += [Item(i+1,name,db_list[i][2][0])]
   return items, records, states, ts
 
-def show_queue_old(query):
+def show_queue_old(query, mode=1):
   items=[]
   records=[]
   name=[]
@@ -71,10 +72,13 @@ def show_queue_old(query):
   names = list(dict.fromkeys(name))
   for i in range(len(names)):
     records += [names[i]]
-    if "[" in names[i]:
-      idx = names[i].rfind("[")
-      names[i] = names[i][:idx]
-    items = [Item(-(i+1),names[i],'PLAYED')] + items
+    #if "[" in names[i]:
+    #  idx = names[i].rfind("[")
+    #  names[i] = names[i][:idx]
+    if mode == 1:
+      items = [Item(-(i+1),names[i],'X')] + items
+    else:
+      items += [Item(-(i+1),names[i],'X')]
   return items, records
 
 def init_queue():
@@ -113,16 +117,12 @@ def jump_queue(data):
         break
 
 def check_readd_queue(data):
-  table = []
   is_readd = False
-  if data and data[0] == '-':
-    data = data[1:]
-    if data.isdigit():
-      _, records = show_queue_old(PLAYED_QUEUE)
-      name = records[int(data)-1]
-      data = database.db_find(EXIST_QUEUE, (name,))[0][1]
-      if data:
-        is_readd = True
+
+  if data and "http" not in data:  #http:// or https://
+    _, records = show_queue_old(PLAYED_QUEUE2, mode=2)
+    data = database.db_find(EXIST_QUEUE, (data,))[0][1]
+    is_readd = True
   return data, is_readd
 
 # Background function to send a forced refresh signal to all clients
@@ -165,7 +165,7 @@ def stream():
 @app.route("/get_table")
 def get_table():
   items1,_,_,_ = show_queue(SHOW_QUEUE)
-  items2,_ = show_queue_old(PLAYED_QUEUE)
+  items2,_ = show_queue_old(PLAYED_QUEUE2, mode=2)
   return render_template('table.html', songs=items1+[Item('','','') for i in range(1)]+items2)
 
 @app.route("/process", methods=['POST', 'GET'])
