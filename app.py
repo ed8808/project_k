@@ -13,13 +13,12 @@ import threading
 
 
 SHOW_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
-SHOW_ALL_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'QUEUED' OR state IS 'CONVERTING' OR state IS 'DOWNLOADED' OR state IS 'PLAYING' OR state IS 'PLAYED') ORDER BY CASE WHEN state = 'PLAYING' THEN 0 ELSE 1 END, date ASC"
 PLAYED_QUEUE1 = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date"
 PLAYED_QUEUE2 = "SELECT name,id,state FROM queue WHERE (state IS 'PLAYED')  ORDER BY date DESC"
 CONVERT_QUEUE = "SELECT name,id,state,date FROM queue WHERE (state IS 'CONVERTING')  ORDER BY date DESC"
 INIT_QUEUE = "CREATE TABLE IF NOT EXISTS queue (name TEXT, id TEXT, state TEXT, date INTEGER)"
 ADD_QUEUE = "INSERT INTO queue (name, id, state, date) VALUES(?,?,?,?)"
-DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ? OR state = ? OR state = ?) AND id = ? AND date = ?" 
+DELETE_QUEUE = "UPDATE queue SET state = ? WHERE (state = ? OR state = ? OR state = ?) AND id = ? AND date = ?" 
 SKIP_QUEUE = "UPDATE queue SET date = ? WHERE (state = ? OR state = ?) AND id = ?"
 EXIST_QUEUE = "SELECT name,id,state,date FROM queue WHERE name = ? ORDER BY date DESC LIMIT 1"
 
@@ -101,9 +100,9 @@ def add_queue(data, is_readd=False):
     database.db_update(ADD_QUEUE, (*data,'QUEUED',t))
 
 def delete_queue(data):
-  _, records, _, ts = show_queue(SHOW_ALL_QUEUE)
+  _, records, _, ts = show_queue(SHOW_QUEUE)
   if data <= len(records):
-    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'CONVERTING', 'DOWNLOADED', 'PLAYED', records[data-1], ts[data-1]))
+    database.db_update(DELETE_QUEUE, ('DELETED', 'QUEUED', 'CONVERTING', 'DOWNLOADED', records[data-1], ts[data-1]))
 
 def jump_queue(data):
   _, records, states, ts = show_queue(SHOW_QUEUE)
@@ -117,6 +116,7 @@ def jump_queue(data):
         break
 
 def check_readd_queue(data):
+  is_readd = False
   if data and data[0] == '-':
     data = data[1:]
     if data.isdigit():

@@ -136,7 +136,7 @@
 				}
 				
 				// Check if a row is being hovered and copy its index
-				else if (currentHoveredRow && currentHoveredRow.cells[0]) {
+				else if (currentHoveredRow && currentHoveredRow.cells[0] && currentHoveredRow.cells[0].textContent[0] == '-') {
 					textbox.value = currentHoveredRow.cells[0].textContent;
 					buttonEvent({'cmd':'add','param': getInput()});
 				}
@@ -175,7 +175,7 @@
 
 			function handleDeleteButton() {
 				var textbox = document.getElementById('textbox');
-				if (currentHoveredRow && currentHoveredRow.cells[0]) {
+				if (currentHoveredRow && currentHoveredRow.cells[0] && currentHoveredRow.cells[0].textContent !== '') {
 					textbox.value = currentHoveredRow.cells[0].textContent;
 					
 					buttonEvent({'cmd':'delete','param': getInput()});
@@ -186,7 +186,7 @@
 
 			function handleJumpButton() {
 				var textbox = document.getElementById('textbox');
-				if (currentHoveredRow && currentHoveredRow.cells[0]) {
+				if (currentHoveredRow && currentHoveredRow.cells[0] && currentHoveredRow.cells[0].textContent !== '') {
 					textbox.value = currentHoveredRow.cells[0].textContent;
 
 					buttonEvent({'cmd':'jump','param': getInput()});
