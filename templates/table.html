@@ -1,6 +1,7 @@
 <table class="center">
 <thead class="tabl">
     <tr>
+        <th>*</th>
         <th>Song</th>
         <th>?</th>
     </tr>
@@ -8,6 +9,7 @@
 <tbody class="tabl">
     {% for song in songs %}
     <tr>
+        <td>{{ song.idx }}</td>
         <td>{{ song.name }}</td>
         <td>{{ song.state }}</td>
     </tr>

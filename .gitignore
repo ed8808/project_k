@@ -44,3 +44,5 @@ temp/
 _temp
 tests/
 *.sock
+*.mp4
+*.wav

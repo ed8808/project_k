@@ -48,11 +48,11 @@ def show_queue(query):
   db_list = database.db_show(query)
 
   for i in range(len(db_list)):
-    #if "[" in db_list[i][0]:
-    #  idx = db_list[i][0].rfind('[')
-    #  name= db_list[i][0][:idx]
-    #else:
-    name = db_list[i][0]
+    if "[" in db_list[i][0]:
+      idx = db_list[i][0].rfind('[')
+      name= db_list[i][0][:idx]
+    else:
+      name = db_list[i][0]
     records += [db_list[i][1]]
     states += [db_list[i][2]]
     ts += [db_list[i][3]]
@@ -72,9 +72,9 @@ def show_queue_old(query, mode=1):
   names = list(dict.fromkeys(name))
   for i in range(len(names)):
     records += [names[i]]
-    #if "[" in names[i]:
-    #  idx = names[i].rfind("[")
-    #  names[i] = names[i][:idx]
+    if "[" in names[i]:
+      idx = names[i].rfind("[")
+      names[i] = names[i][:idx]
     if mode == 1:
       items = [Item(-(i+1),names[i],'X')] + items
     else:
@@ -117,12 +117,14 @@ def jump_queue(data):
         break
 
 def check_readd_queue(data):
-  is_readd = False
-
-  if data and "http" not in data:  #http:// or https://
-    _, records = show_queue_old(PLAYED_QUEUE2, mode=2)
-    data = database.db_find(EXIST_QUEUE, (data,))[0][1]
-    is_readd = True
+  if data and data[0] == '-':
+    data = data[1:]
+    if data.isdigit():
+      _, records = show_queue_old(PLAYED_QUEUE2, mode=2)
+      name = records[int(data)-1]
+      data = database.db_find(EXIST_QUEUE, (name,))[0][1]
+      if data:
+        is_readd = True
   return data, is_readd
 
 # Background function to send a forced refresh signal to all clients
